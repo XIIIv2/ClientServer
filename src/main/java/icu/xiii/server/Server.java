@@ -23,13 +23,13 @@ public class Server {
                 Socket socket = server.accept();
                 try {
                     Connection connection = new Connection(socket, "Client-" + counter.getAndIncrement());
-                    connections.add(connection);
                     System.out.printf("Connected: %s at %s from %s\n",
                         connection.getClientName(),
                         dtf.format(connection.getConnectedAt()),
                         connection.getRemoteAddress()
                     );
                     broadcast("Server", connection.getClientName() + " connected.");
+                    connections.add(connection);
                 } catch (IOException e) {
                     System.out.println("Error: " + e.getMessage());
                     socket.close();
