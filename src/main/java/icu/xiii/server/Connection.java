@@ -42,11 +42,13 @@ public class Connection extends Thread {
     }
 
     public void send(String message) {
-        try {
-            out.write(message + "\n");
-            out.flush();
-        } catch (IOException e) {
-            System.out.println("Connection::send error: " + e.getMessage());
+        if (!socket.isClosed()) {
+            try {
+                out.write(message + "\n");
+                out.flush();
+            } catch (IOException e) {
+                System.out.println("Connection::send error: " + e.getMessage());
+            }
         }
     }
 
