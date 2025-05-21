@@ -34,6 +34,7 @@ public class Connection extends Thread {
                     if (!socket.isConnected()) {
                         System.out.println("Connecting...");
                         Thread.sleep(1000);
+                        continue;
                     }
                     if (socket.isClosed()) {
                         break;
