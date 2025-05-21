@@ -104,10 +104,8 @@ public class Server {
     }
 
     public static List<String> getUsersList() {
-        List<String> users = new ArrayList<>();
-        connections.forEach(c -> {
-            users.add(c.getClientName());
-        });
-        return users;
+        return connections.stream()
+                .map(Connection::getClientName)
+                .toList();
     }
 }
