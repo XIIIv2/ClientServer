@@ -26,7 +26,8 @@ public class Server {
     private static final AtomicInteger counter = new AtomicInteger(1);
     private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yy HH:mm:ss");
     public static final String HELP = """
-    Type "/exit" for disconnect
+    Type "/help" for this help notice
+    "/exit" for disconnect
     "/private Client-N text" where N is client ID for private message
     "/users" for users list
     """;
