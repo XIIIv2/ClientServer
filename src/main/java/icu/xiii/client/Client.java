@@ -26,9 +26,11 @@ public class Client {
             System.out.println("Enter message:");
             while (!connection.getSocket().isClosed()) {
                 String message = reader.readLine();
-                connection.send(message);
-                synchronized (Client.class) {
-                    Client.class.wait(250);
+                if (!message.isBlank()) {
+                    connection.send(message);
+                    synchronized (Client.class) {
+                        Client.class.wait(250);
+                    }
                 }
             }
             reader.close();

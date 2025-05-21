@@ -5,6 +5,7 @@ import icu.xiii.app.Packet;
 import java.io.*;
 import java.net.Socket;
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Connection extends Thread {
 
@@ -73,6 +74,21 @@ public class Connection extends Thread {
             switch (cmd[0].toLowerCase()) {
                 case "exit":
                     Server.disconnect(this);
+                    break;
+                case "help":
+                    Server.sendTo("Server", clientName, Server.HELP);
+                    break;
+                case "users":
+                    AtomicInteger counter = new AtomicInteger(1);
+                    StringBuilder sb = new StringBuilder()
+                            .append("\n");
+                    Server.getUsersList().forEach(name -> {
+                        sb.append(counter.getAndIncrement())
+                                .append(") ")
+                                .append(name)
+                                .append("\n");
+                    });
+                    Server.sendTo("Server", clientName, sb.toString().trim());
                     break;
                 case "private":
                     String[] msg = cmd[1].split(" ", 2);

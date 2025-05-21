@@ -11,9 +11,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.Optional;
+import java.util.NoSuchElementException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class Server {
 
@@ -22,6 +25,11 @@ public class Server {
     private static final LinkedList<Connection> connections = new LinkedList<>();
     private static final AtomicInteger counter = new AtomicInteger(1);
     private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yy HH:mm:ss");
+    public static final String HELP = """
+    Type "/exit" for disconnect
+    "/private Client-N text" where N is client ID for private message
+    "/users" for users list
+    """;
     public static final Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer())
@@ -42,7 +50,7 @@ public class Server {
                     );
                     broadcast("Server", connection.getClientName() + " connected.");
                     connections.add(connection);
-                    sendTo("Server", connection.getClientName(), "Greetings! Type \"/exit\" for disconnect or \"/private Client-N text\" where N is client ID for private message");
+                    sendTo("Server", connection.getClientName(), "Greetings!\n" + HELP);
                 } catch (IOException e) {
                     System.out.println("Error: " + e.getMessage());
                     socket.close();
@@ -65,24 +73,41 @@ public class Server {
     }
 
     public static void sendTo(String from, String to, String message) {
-        String json = gson.toJson(new Packet(from, LocalDateTime.now(), "private [" + to + "]: " + message));
-        Optional<Connection> connection = connections.stream()
-                .filter(c -> c.getClientName().equalsIgnoreCase(to))
-                .findFirst();
-        if (connection.isPresent()) {
-            connection.get().send(json);
+        try {
+            Connection connection = findConnection(to);
+            String json = gson.toJson(new Packet(from, LocalDateTime.now(), "private [" + to + "]: " + message));
+            connection.send(json);
             System.out.printf("[%s] %s private [%s]: %s\n",
                     dtf.format(LocalDateTime.now()),
                     from,
-                    connection.get().getClientName(),
+                    to,
                     message
             );
-        } else {
-            System.out.printf("[%s] can't send private message from %s to %s (user not found).",
+        } catch (NoSuchElementException e) {
+            String json = gson.toJson(new Packet("Server", LocalDateTime.now(), "private [" + from + "]: " + e.getMessage()));
+            Connection connection = findConnection(from);
+            connection.send(json);
+            System.out.printf("[%s] can't send private message from %s to %s. (%s)",
                     dtf.format(LocalDateTime.now()),
                     from,
-                    to
+                    to,
+                    e.getMessage()
             );
         }
+    }
+
+    private static Connection findConnection(String clientName) {
+        return connections.stream()
+                .filter(c -> c.getClientName().equalsIgnoreCase(clientName))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No such user " + clientName));
+    }
+
+    public static List<String> getUsersList() {
+        List<String> users = new ArrayList<>();
+        connections.forEach(c -> {
+            users.add(c.getClientName());
+        });
+        return users;
     }
 }
