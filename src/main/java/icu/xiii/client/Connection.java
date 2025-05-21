@@ -30,15 +30,7 @@ public class Connection extends Thread {
     public void run() {
         try {
             try {
-                while (true) {
-                    if (!socket.isConnected()) {
-                        System.out.println("Connecting...");
-                        Thread.sleep(1000);
-                        continue;
-                    }
-                    if (socket.isClosed()) {
-                        break;
-                    }
+                while (!socket.isClosed()) {
                     String json = in.readLine();
                     if (json == null) {
                         break;
@@ -50,7 +42,7 @@ public class Connection extends Thread {
                 close();
                 System.out.println("Disconnected.");
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             System.out.println("Client connection error: " + e.getMessage());
         }
     }

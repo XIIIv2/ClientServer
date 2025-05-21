@@ -27,11 +27,11 @@ public class Server {
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer())
             .create();
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         try (ServerSocket server = new ServerSocket()) {
             server.bind(new InetSocketAddress(HOST, PORT));
             System.out.println("Server started. Listening " + server.getLocalSocketAddress().toString());
-            while (true) {
+            while (!server.isClosed()) {
                 Socket socket = server.accept();
                 try {
                     Connection connection = new Connection(socket, "Client-" + counter.getAndIncrement());

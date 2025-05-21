@@ -27,7 +27,9 @@ public class Client {
             while (!connection.getSocket().isClosed()) {
                 String message = reader.readLine();
                 connection.send(message);
-                Thread.sleep(1000);
+                synchronized (Client.class) {
+                    Client.class.wait(250);
+                }
             }
             reader.close();
         } catch (IOException | InterruptedException e) {
