@@ -1,23 +1,32 @@
 package icu.xiii.client;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import icu.xiii.app.LocalDateTimeDeserializer;
+import icu.xiii.app.LocalDateTimeSerializer;
+import icu.xiii.app.Packet;
+
 import java.io.*;
 import java.net.Socket;
+import java.time.LocalDateTime;
 
 public class Client {
 
     private static final String SERVER_HOST = "127.0.0.1";
     private static final int SERVER_PORT = 8080;
-
-    private static BufferedReader reader;
+    public static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer())
+            .create();
 
     public static void main(String[] args) {
         try {
             Connection connection = new Connection(new Socket(SERVER_HOST, SERVER_PORT));
-            reader = new BufferedReader(new InputStreamReader(System.in));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             System.out.println("Enter message:");
             while (!connection.getSocket().isClosed()) {
-                String packet = reader.readLine();
-                connection.send(packet);
+                String message = reader.readLine();
+                connection.send(message);
                 Thread.sleep(1000);
             }
             reader.close();

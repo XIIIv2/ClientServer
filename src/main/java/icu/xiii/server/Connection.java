@@ -1,5 +1,7 @@
 package icu.xiii.server;
 
+import icu.xiii.app.Packet;
+
 import java.io.*;
 import java.net.Socket;
 import java.time.LocalDateTime;
@@ -23,18 +25,13 @@ public class Connection extends Thread {
 
     @Override
     public void run() {
-        String packet;
+        String json;
         try {
-            while (true) {
-                packet = in.readLine();
-                if (packet.equalsIgnoreCase("exit")) {
-                    Server.disconnect(this);
-                    socket.close();
-                    in.close();
-                    out.close();
-                    break;
-                }
-                Server.broadcast(clientName, packet);
+            while (!socket.isClosed()) {
+                json = in.readLine();
+                Packet packet = Server.gson.fromJson(json, Packet.class);
+                packet.setSender(clientName);
+                onPacketReceived(packet);
             }
         } catch (IOException e) {
             System.out.println("Connection error: " + e.getMessage());
@@ -62,5 +59,37 @@ public class Connection extends Thread {
 
     public String getRemoteAddress() {
         return this.socket.getRemoteSocketAddress().toString();
+    }
+
+    public void close() throws IOException {
+        socket.close();
+        in.close();
+        out.close();
+    }
+
+    private void onPacketReceived(Packet packet) throws IOException {
+        if (packet.getMessage().startsWith("/")) {
+            String[] cmd = packet.getMessage().substring(1).split(" ", 2);
+            switch (cmd[0].toLowerCase()) {
+                case "exit":
+                    Server.disconnect(this);
+                    break;
+                case "private":
+                    String[] msg = cmd[1].split(" ", 2);
+                    if (msg.length < 2) {
+                        System.out.println("Tried to send empty private message (from " + packet.getSender() + ")");
+                    } else {
+                        Server.sendTo(clientName, msg[0], msg[1]);
+                    }
+                    break;
+                default:
+                    System.out.printf("Unknown command %s (%s)\n",
+                        cmd[0],
+                        packet.getMessage()
+                    );
+            }
+        } else {
+            Server.broadcast(clientName, packet.getMessage());
+        }
     }
 }
